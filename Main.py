@@ -1,93 +1,115 @@
-import commands
 import json
 import os
 import re
-import urllib
-import urllib2
-
 import subprocess
+import urllib2
 import zipfile
 
 
-def GetLastRelease(httpaddress):
-    httpstream = urllib2.urlopen(httpaddress)
-    res = httpstream.read()
+def get_last_release(http_address):
+    http_stream = urllib2.urlopen(http_address)
+    res = http_stream.read()
     res_json = json.loads(res)
+    print res_json["tag_name"], res_json["zipball_url"]
     return res_json["tag_name"], res_json["zipball_url"]
 
 
-def DownLoadLastRelease(version, zipurl):
+def downLoad_last_release(version, zip_url):
     path = r'F:'
     file_name = version + r'.zip'
-    dest_dir = os.path.join(path, file_name)
-    #urllib.urlretrieve(zipurl, path + "/" + version + ".zip")
-    f = urllib2.urlopen(zipurl)
+    f = urllib2.urlopen(zip_url)
     data = f.read()
-    with open(path+"/"+version+".zip", "wb") as code:
+    with open(path + "/" + file_name, "wb") as code:
         code.write(data)
-    return path+"/"+version+".zip"
+    print path + "/" + file_name + " Finish"
+    return path, path + "/" + file_name
 
-# ves, zipUrl = GetLastRelease("https://api.github.com/repos/jacoblai/Coolpy5Sub/releases/latest")
-# print ves, zipUrl
-# zippath = DownLoadLastRelease(ves, zipUrl)
-# print zippath
 
-zippath = "F:/5.0.1.0.zip"
+def un_zip(zip_path, ext_path):
+    r = zipfile.is_zipfile(zip_path)
+    first_dic = False
+    filename = ""
+    if r:
+        fz = zipfile.ZipFile(zip_path, 'r')
+        for file in fz.namelist():
+            if not first_dic:
+                filename = file
+                first_dic = True
+            fz.extract(file, ext_path)
+    else:
+        print('This file is not zip file')
+        return ""
+    print filename + 'zip finish'
+    return ext_path + filename
 
-os.chdir("F:/")
-r = zipfile.is_zipfile(zippath)
-first_dic = False
-filename = ""
-if r:
-    fz = zipfile.ZipFile(zippath, 'r')
-    for file in fz.namelist():
-        if not first_dic:
-            filename = file
-            first_dic = True
-        fz.extract(file, "/")
-else:
-    print('This file is not zip file')
 
-print 'zip finish'
+def shell_exec(cmd):
+    child = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    info = child.stdout.read().decode('gb2312')
+    print "message:", info
+    return info
 
-print filename
 
+def set_environ(file_path):
+    os.chdir(file_path)
+    os.environ["GOPATH"] = file_path
+    # os.environ["path"] = os.environ["path"] + ";" + rice_path
+    print os.getcwd()
+    return
+
+
+def get_file_path(owner, repo):
+    ves, zip_url = get_last_release("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest")
+    path, zip_path = downLoad_last_release(ves, zip_url)
+    file_path = un_zip(zip_path, path + "/")
+    return file_path
+
+
+def go_build(file_path):
+    shell_info = shell_exec("go build -o win32.exe main.go")
+    if shell_info != "":
+        packs = re.findall("cannot find package \"(.*)\"", shell_info)
+        for pack in packs:
+            shell_exec("go get " + pack)
+        shell_exec("go build -o win32.exe main.go")
+    print "build success " + file_path + "win32.exe"
+    return file_path
+
+
+def start(owner, repo, is_rice):
+    file_path = os.getcwd()
+    rice_path = ""
+    if is_rice:
+        set_environ(file_path)
+        shell_exec("go get github.com/GeertJohan/go.rice/rice")
+        rice_path = file_path + "/bin/rice.exe"
+    os.chdir(file_path)
+    repo_file = get_file_path(owner, repo)
+    if is_rice:
+        os.chdir(repo_file)
+        shell_exec(rice_path + " embed-go")
+    os.chdir(repo_file)
+    set_environ(repo_file)
+    repo_path = go_build(repo_file)
+    return
+
+
+start("jacoblai", "Coolpy5Sub", True)
+# get_last_release_zip("jacoblai", "Coolpy5Sub")
 
 # for parent,dirnames,_ in os.walk("F:/"):
 #     for dirname in dirnames:
 #         print "parent is:" + parent
 #         print "dirname is" + dirname
 
-os.environ["GOPATH"]="F:/"+filename
-#print os.environ["GOPATH"]
-os.chdir("F:/"+filename)
-#print os.getcwd()
-#os.system("go build main.go")
-#cmd = os.popen("go env")
-#ss = cmd.read().decode('GB2312')
-#print ss
+# os.environ["GOPATH"] = "F:/" + filename
+# print os.environ["GOPATH"]
+# os.chdir("F:/" + filename)
+# print os.getcwd()
 
+# res = re.findall("cannot find package \"(.*)\"", info)
+# print res
 
-
-#for i in cmd:
-    #print i
-#ss = cmd.readline().decode('GB2312')
-child = subprocess.Popen('go build main.go',shell=False,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-returncode = child.poll()
-info = child.stdout.read().decode('gb2312')
-print "message:",info
-res = re.findall("cannot find package \"(.*)\"", info)
-print res
-
-
-for pack in res:
-    child = subprocess.Popen('go get ' + pack,shell=False,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    returncode = child.poll()
-    info = child.stdout.read().decode('gb2312')
-
-
-#print (a)
-#res = re.findall("\w", cmd)
-#print res
-#cmd = os.system("go build -o win32.exe main.go")
-#print cmd
+# for pack in res:
+#     child = subprocess.Popen('go get ' + pack, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+#     info = child.stdout.read().decode('gb2312')

@@ -1,11 +1,19 @@
 import json
 import os
+import platform
 import re
 import subprocess
 import urllib2
 import zipfile
 
-file_path = os.getcwd()
+root_path = os.getcwd()
+system_name = platform.system()
+machine = platform.machine()
+out_file_name = system_name + "_" + machine
+rice_name = "rice"
+if system_name == "Windows":
+    out_file_name += ".exe"
+    rice_name += ".exe"
 
 
 def get_last_release(http_address):
@@ -17,7 +25,7 @@ def get_last_release(http_address):
 
 
 def downLoad_last_release(version, zip_url):
-    path = file_path
+    path = root_path
     file_name = version + r'.zip'
     f = urllib2.urlopen(zip_url)
     data = f.read()
@@ -46,8 +54,10 @@ def un_zip(zip_path, ext_path):
 
 
 def shell_exec(cmd):
-    child = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    info = child.stdout.read().decode('gb2312')
+    print "exec " + cmd
+    child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    info = child.stdout.read()
+    #err = child.stderr.read()
     print "message:", info
     return info
 
@@ -68,23 +78,23 @@ def get_file_path(owner, repo):
 
 
 def go_build(file_path):
-    shell_info = shell_exec("go build -o win32.exe main.go")
+    shell_info = shell_exec("go build -o " + out_file_name + " main.go")
     if shell_info != "":
         packs = re.findall("cannot find package \"(.*)\"", shell_info)
         for pack in packs:
             shell_exec("go get " + pack)
-        shell_exec("go build -o win32.exe main.go")
-    print "build success " + file_path + "win32.exe"
+        shell_exec("go build -o " + out_file_name + " main.go")
+    print "build success " + file_path + out_file_name
     return file_path
 
 
 def start(owner, repo, is_rice):
     rice_path = ""
     if is_rice:
-        set_environ(file_path)
+        set_environ(root_path)
         shell_exec("go get github.com/GeertJohan/go.rice/rice")
-        rice_path = file_path + "/bin/rice.exe"
-    os.chdir(file_path)
+        rice_path = root_path + "/bin/" + rice_name
+    os.chdir(root_path)
     repo_file = get_file_path(owner, repo)
     if is_rice:
         os.chdir(repo_file)
@@ -93,7 +103,6 @@ def start(owner, repo, is_rice):
     set_environ(repo_file)
     repo_path = go_build(repo_file)
     return
-
 
 start("jacoblai", "Coolpy5Sub", True)
 # get_last_release_zip("jacoblai", "Coolpy5Sub")

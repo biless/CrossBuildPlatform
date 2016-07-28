@@ -5,6 +5,8 @@ import subprocess
 import urllib2
 import zipfile
 
+file_path = os.getcwd()
+
 
 def get_last_release(http_address):
     http_stream = urllib2.urlopen(http_address)
@@ -15,7 +17,7 @@ def get_last_release(http_address):
 
 
 def downLoad_last_release(version, zip_url):
-    path = r'F:'
+    path = file_path
     file_name = version + r'.zip'
     f = urllib2.urlopen(zip_url)
     data = f.read()
@@ -77,7 +79,6 @@ def go_build(file_path):
 
 
 def start(owner, repo, is_rice):
-    file_path = os.getcwd()
     rice_path = ""
     if is_rice:
         set_environ(file_path)

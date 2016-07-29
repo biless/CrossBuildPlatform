@@ -3,8 +3,13 @@ import os
 import platform
 import re
 import subprocess
+import urllib
 import urllib2
 import zipfile
+
+import sys
+
+import time
 
 root_path = os.getcwd()
 system_name = platform.system()
@@ -104,7 +109,85 @@ def start(owner, repo, is_rice):
     repo_path = go_build(repo_file)
     return
 
-start("jacoblai", "Coolpy5Sub", True)
+
+
+def view_bar(num=1, sum=100, bar_word="#"):
+    rate = float(num) / float(sum)
+    rate_num = int(rate * 100)
+    print '\r%d%% :' %(rate_num),
+    for i in range(0, num):
+        os.write(1, bar_word)
+    sys.stdout.flush()
+
+# print "finish"
+# for i in range(0, 100):
+#     time.sleep(0.1)
+#     view_bar(i, 100)
+#
+# print "finish"
+# for i in range(0, 100):
+#     time.sleep(0.1)
+#     view_bar(i, 100)
+
+
+r = urllib2.urlopen("http://www.golangtc.com/download")
+res1 = r.read()
+ban = re.findall("<a class=\"accordion-toggle\".*?>[\r\n \t]*([\d.]*?)[\r\n \t]*</a>", res1)
+print ban[0]
+bit = "386"
+if machine == "AMD64":
+    bit = "amd64"
+lower_system_name = system_name.lower()
+zip_name = "go"+ ban[0] +"." + lower_system_name + "-" + bit
+if system_name == "Windows":
+    zip_name += ".zip"
+else:
+    zip_name += ".tar.gz"
+
+
+def report(count, blockSize, totalSize):
+    percent = count * blockSize * 100 / float(totalSize)
+    sys.stdout.write("\r%f%%" % percent + ' complete')
+    sys.stdout.flush()
+
+# sys.stdout.write('\rFetching ' + "haha" + '...\n')
+#
+# url = "http://www.golangtc.com/static/go/" + ban[0] + "/" + zip_name
+#
+# file_name = url.split('/')[-1]
+# u = urllib2.urlopen(url)
+# f = open(file_name, 'wb')
+# meta = u.info()
+# file_size = int(meta.getheaders("Content-Length")[0])
+# print "Downloading: %s Bytes: %s" % (file_name, file_size)
+#
+# file_size_dl = 0
+# block_sz = 8192
+# while True:
+#     buffer = u.read(block_sz)
+#     if not buffer:
+#         break
+#
+#     file_size_dl += len(buffer)
+#     f.write(buffer)
+#     status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+#     status = status + chr(8) * (len(status) + 1)
+#     print status
+#
+# f.close()
+
+
+sys.stdout.write('\rFetching ' + "haha" + '...\n')
+local = os.path.join(os.getcwd(),zip_name)
+urllib.urlretrieve("http://www.golangtc.com/static/go/" + ban[0] + "/" + zip_name, local, reporthook=report)
+sys.stdout.write("\rDownload complete, saved as %s" % (zip_name) + '\n\n')
+sys.stdout.flush()
+
+print "hello world"
+# downLoad_last_release(zip_name,"http://www.golangtc.com/static/go/" + ban[0] + "/" + zip_name)
+
+# start("jacoblai", "Coolpy5Sub", True)
+
 # get_last_release_zip("jacoblai", "Coolpy5Sub")
 
 # for parent,dirnames,_ in os.walk("F:/"):

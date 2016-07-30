@@ -3,13 +3,10 @@ import os
 import platform
 import re
 import subprocess
+import sys
 import urllib
 import urllib2
 import zipfile
-
-import sys
-
-import time
 
 root_path = os.getcwd()
 system_name = platform.system()
@@ -29,15 +26,19 @@ def get_last_release(http_address):
     return res_json["tag_name"], res_json["zipball_url"]
 
 
-def downLoad_last_release(version, zip_url):
-    path = root_path
-    file_name = version + r'.zip'
-    f = urllib2.urlopen(zip_url)
-    data = f.read()
-    with open(path + "/" + file_name, "wb") as code:
-        code.write(data)
-    print path + "/" + file_name + " Finish"
-    return path, path + "/" + file_name
+def process(count, block_size, total_size):
+    percent = count * block_size * 100 / float(total_size)
+    sys.stdout.write("\r%f%%" % percent + ' complete')
+    sys.stdout.flush()
+
+
+def download_file(file_url, file_name, file_directory=os.getcwd()):
+    sys.stdout.write('\rStart Download <' + file_name + '>...\n')
+    local = os.path.join(file_directory, file_name)
+    urllib.urlretrieve(file_url, local, reporthook=process)
+    sys.stdout.write("\rDownload complete, saved as %s" % file_name + '\n\n')
+    sys.stdout.flush()
+    return file_directory, local
 
 
 def un_zip(zip_path, ext_path):
@@ -46,11 +47,11 @@ def un_zip(zip_path, ext_path):
     filename = ""
     if r:
         fz = zipfile.ZipFile(zip_path, 'r')
-        for file in fz.namelist():
+        for name in fz.namelist():
             if not first_dic:
-                filename = file
+                filename = name
                 first_dic = True
-            fz.extract(file, ext_path)
+            fz.extract(name, ext_path)
     else:
         print('This file is not zip file')
         return ""
@@ -60,11 +61,13 @@ def un_zip(zip_path, ext_path):
 
 def shell_exec(cmd):
     print "exec " + cmd
-    child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     info = child.stdout.read()
-    #err = child.stderr.read()
-    print "message:", info
-    return info
+    err = child.stderr.read()
+    print "message:", info, err
+    return info, err
+
+print os.environ["PATH"]
 
 
 def set_environ(file_path):
@@ -77,15 +80,15 @@ def set_environ(file_path):
 
 def get_file_path(owner, repo):
     ves, zip_url = get_last_release("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest")
-    path, zip_path = downLoad_last_release(ves, zip_url)
+    path, zip_path = download_file(zip_url, ves + ".zip")
     file_path = un_zip(zip_path, path + "/")
     return file_path
 
 
 def go_build(file_path):
-    shell_info = shell_exec("go build -o " + out_file_name + " main.go")
-    if shell_info != "":
-        packs = re.findall("cannot find package \"(.*)\"", shell_info)
+    shell_info, err_msg = shell_exec("go build -o " + out_file_name + " main.go")
+    if err_msg != "":
+        packs = re.findall("cannot find package \"(.*)\"", err_msg)
         for pack in packs:
             shell_exec("go get " + pack)
         shell_exec("go build -o " + out_file_name + " main.go")
@@ -106,49 +109,30 @@ def start(owner, repo, is_rice):
         shell_exec(rice_path + " embed-go")
     os.chdir(repo_file)
     set_environ(repo_file)
-    repo_path = go_build(repo_file)
     return
 
 
-
-def view_bar(num=1, sum=100, bar_word="#"):
-    rate = float(num) / float(sum)
-    rate_num = int(rate * 100)
-    print '\r%d%% :' %(rate_num),
-    for i in range(0, num):
-        os.write(1, bar_word)
-    sys.stdout.flush()
-
-# print "finish"
-# for i in range(0, 100):
-#     time.sleep(0.1)
-#     view_bar(i, 100)
-#
-# print "finish"
-# for i in range(0, 100):
-#     time.sleep(0.1)
-#     view_bar(i, 100)
+def get_go_version():
+    html = urllib.urlopen("http://www.golangtc.com/download").read()
+    versions = re.findall("<a class=\"accordion-toggle\".*?>[\r\n \t]*([\d.]*?)[\r\n \t]*</a>", html)
+    return versions[0]
 
 
-r = urllib2.urlopen("http://www.golangtc.com/download")
-res1 = r.read()
-ban = re.findall("<a class=\"accordion-toggle\".*?>[\r\n \t]*([\d.]*?)[\r\n \t]*</a>", res1)
-print ban[0]
-bit = "386"
-if machine == "AMD64":
-    bit = "amd64"
-lower_system_name = system_name.lower()
-zip_name = "go"+ ban[0] +"." + lower_system_name + "-" + bit
-if system_name == "Windows":
-    zip_name += ".zip"
-else:
-    zip_name += ".tar.gz"
+def get_go_compress_name(go_version):
+    bit = "386"
+    if machine == "AMD64" or machine == "x86_64":
+        bit = "amd64"
+    lower_system_name = system_name.lower()
+    zip_name = "go" + go_version + "." + lower_system_name + "-" + bit
+    if system_name == "Windows":
+        zip_name += ".zip"
+    else:
+        zip_name += ".tar.gz"
+    return zip_name
 
-
-def report(count, blockSize, totalSize):
-    percent = count * blockSize * 100 / float(totalSize)
-    sys.stdout.write("\r%f%%" % percent + ' complete')
-    sys.stdout.flush()
+version = get_go_version()
+print version
+print get_go_compress_name(version)
 
 # sys.stdout.write('\rFetching ' + "haha" + '...\n')
 #
@@ -176,17 +160,10 @@ def report(count, blockSize, totalSize):
 #
 # f.close()
 
-
-sys.stdout.write('\rFetching ' + "haha" + '...\n')
-local = os.path.join(os.getcwd(),zip_name)
-urllib.urlretrieve("http://www.golangtc.com/static/go/" + ban[0] + "/" + zip_name, local, reporthook=report)
-sys.stdout.write("\rDownload complete, saved as %s" % (zip_name) + '\n\n')
-sys.stdout.flush()
-
 print "hello world"
 # downLoad_last_release(zip_name,"http://www.golangtc.com/static/go/" + ban[0] + "/" + zip_name)
 
-# start("jacoblai", "Coolpy5Sub", True)
+start("jacoblai", "Coolpy5Sub", True)
 
 # get_last_release_zip("jacoblai", "Coolpy5Sub")
 

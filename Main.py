@@ -73,7 +73,6 @@ print os.environ["PATH"]
 def set_environ(file_path):
     os.chdir(file_path)
     os.environ["GOPATH"] = file_path
-    # os.environ["path"] = os.environ["path"] + ";" + rice_path
     print os.getcwd()
     return
 

@@ -16,6 +16,7 @@ rice_name = "rice"
 if system_name == "Windows":
     out_file_name += ".exe"
     rice_name += ".exe"
+go_path = "go"
 
 
 def get_last_release(http_address):
@@ -62,12 +63,11 @@ def un_zip(zip_path, ext_path):
 def shell_exec(cmd):
     print "exec " + cmd
     child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    info = child.stdout.read()
-    err = child.stderr.read()
-    print "message:", info, err
+    info = child.stdout.read().decode("gb2312")
+    err = child.stderr.read().decode("gb2312")
+    print "info message:\n", info
+    print "error message:\n", err
     return info, err
-
-print os.environ["PATH"]
 
 
 def set_environ(file_path):
@@ -85,12 +85,12 @@ def get_file_path(owner, repo):
 
 
 def go_build(file_path):
-    shell_info, err_msg = shell_exec("go build -o " + out_file_name + " main.go")
+    shell_info, err_msg = shell_exec(go_path + " build -o " + out_file_name + " main.go")
     if err_msg != "":
         packs = re.findall("cannot find package \"(.*)\"", err_msg)
         for pack in packs:
-            shell_exec("go get " + pack)
-        shell_exec("go build -o " + out_file_name + " main.go")
+            shell_exec(go_path + " get " + pack)
+        shell_exec(go_path + " build -o " + out_file_name + " main.go")
     print "build success " + file_path + out_file_name
     return file_path
 
@@ -99,7 +99,7 @@ def start(owner, repo, is_rice):
     rice_path = ""
     if is_rice:
         set_environ(root_path)
-        shell_exec("go get github.com/GeertJohan/go.rice/rice")
+        shell_exec(go_path + " get github.com/GeertJohan/go.rice/rice")
         rice_path = root_path + "/bin/" + rice_name
     os.chdir(root_path)
     repo_file = get_file_path(owner, repo)
@@ -108,6 +108,7 @@ def start(owner, repo, is_rice):
         shell_exec(rice_path + " embed-go")
     os.chdir(repo_file)
     set_environ(repo_file)
+    go_build(repo_file)
     return
 
 
@@ -129,56 +130,32 @@ def get_go_compress_name(go_version):
         zip_name += ".tar.gz"
     return zip_name
 
-version = get_go_version()
-print version
-print get_go_compress_name(version)
 
-# sys.stdout.write('\rFetching ' + "haha" + '...\n')
-#
-# url = "http://www.golangtc.com/static/go/" + ban[0] + "/" + zip_name
-#
-# file_name = url.split('/')[-1]
-# u = urllib2.urlopen(url)
-# f = open(file_name, 'wb')
-# meta = u.info()
-# file_size = int(meta.getheaders("Content-Length")[0])
-# print "Downloading: %s Bytes: %s" % (file_name, file_size)
-#
-# file_size_dl = 0
-# block_sz = 8192
-# while True:
-#     buffer = u.read(block_sz)
-#     if not buffer:
-#         break
-#
-#     file_size_dl += len(buffer)
-#     f.write(buffer)
-#     status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
-#     status = status + chr(8) * (len(status) + 1)
-#     print status
-#
-# f.close()
+def get_go_compress():
+    go_version = get_go_version()
+    print "go version is ", go_version
+    go_compress_name = get_go_compress_name(go_version)
+    print "go compress name is ", go_compress_name
+    file_directory, file_path = download_file("http://www.golangtc.com/static/go/" + go_version + "/" + go_compress_name
+                                              , go_compress_name)
+    return file_directory, file_path
+
+
+def get_go():
+    # file_directory, file_path = get_go_compress()
+    file_directory = "F:\CrossBuildPlatform/"
+    file_path = "F:\CrossBuildPlatform\go1.6.3.windows-amd64.zip"
+    print file_directory, " File Path:", file_path
+    ext_path = un_zip(file_path, file_directory)
+    print ext_path
+    go_path_temp = ext_path + "bin/go"
+    print os.environ["PATH"]
+    print shell_exec(go_path_temp + " env")
+    return go_path_temp
+
+
+go_path = get_go()
 
 print "hello world"
-# downLoad_last_release(zip_name,"http://www.golangtc.com/static/go/" + ban[0] + "/" + zip_name)
 
 start("jacoblai", "Coolpy5Sub", True)
-
-# get_last_release_zip("jacoblai", "Coolpy5Sub")
-
-# for parent,dirnames,_ in os.walk("F:/"):
-#     for dirname in dirnames:
-#         print "parent is:" + parent
-#         print "dirname is" + dirname
-
-# os.environ["GOPATH"] = "F:/" + filename
-# print os.environ["GOPATH"]
-# os.chdir("F:/" + filename)
-# print os.getcwd()
-
-# res = re.findall("cannot find package \"(.*)\"", info)
-# print res
-
-# for pack in res:
-#     child = subprocess.Popen('go get ' + pack, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-#     info = child.stdout.read().decode('gb2312')

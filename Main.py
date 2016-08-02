@@ -159,30 +159,6 @@ def build_zip(out_file_path, out_file_name):
     return
 
 
-def cross_build(owner, repo, repo_file):
-    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "amd64")
-    build_zip(out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "386")
-    build_zip(out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "amd64")
-    build_zip(out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "386")
-    build_zip(out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "darwin", "amd64")
-    build_zip(out_file_path, out_file_name)
-    return
-
-
-def start(owner, repo):
-    os.chdir(root_path)
-    repo_file = get_file_path(owner, repo)
-    # repo_file = "F:\CrossBuildPlatform\jacoblai-Coolpy5Sub-9bc587c/"
-    os.chdir(repo_file)
-    set_environ(repo_file)
-    cross_build(owner, repo, repo_file)
-    return
-
-
 def get_go_version():
     html = urllib.urlopen("http://www.golangtc.com/download").read()
     versions = re.findall("<a class=\"accordion-toggle\".*?>[\r\n \t]*([\d.]*?)[\r\n \t]*</a>", html)
@@ -225,8 +201,29 @@ def get_go():
     return go_path_temp
 
 
-# go_path = get_go()
+def cross_build(owner, repo, repo_file):
+    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "amd64")
+    build_zip(out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "386")
+    build_zip(out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "amd64")
+    build_zip(out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "386")
+    build_zip(out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "darwin", "amd64")
+    build_zip(out_file_path, out_file_name)
+    return
 
-print "hello world"
+
+def start(owner, repo):
+    os.chdir(root_path)
+    repo_file = get_file_path(owner, repo)
+    # repo_file = "F:\CrossBuildPlatform\jacoblai-Coolpy5Sub-9bc587c/"
+    os.chdir(repo_file)
+    set_environ(repo_file)
+    cross_build(owner, repo, repo_file)
+    return
+
+# go_path = get_go()
 
 start("jacoblai", "Coolpy5Sub")

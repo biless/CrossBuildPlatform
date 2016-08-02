@@ -65,8 +65,9 @@ def shell_exec(cmd):
     child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     info = child.stdout.read().decode("gb2312")
     err = child.stderr.read().decode("gb2312")
-    print "info message:\n", info
-    print "error message:\n", err
+    print "exec ok"
+    # print "info message:\n", info
+    # print "error message:\n", err
     return info, err
 
 
@@ -84,8 +85,8 @@ def get_file_path(owner, repo):
     return file_path
 
 
-def go_build(file_path):
-    shell_info, err_msg = shell_exec(go_path + " build -o " + out_file_name + " main.go")
+def go_build(file_path, out_file_path):
+    shell_info, err_msg = shell_exec(go_path + " build -o " + out_file_path + " main.go")
     if err_msg != "":
         packs = re.findall("cannot find package \"(.*)\"", err_msg)
         for pack in packs:
@@ -93,6 +94,21 @@ def go_build(file_path):
         shell_exec(go_path + " build -o " + out_file_name + " main.go")
     print "build success " + file_path + out_file_name
     return file_path
+
+
+def set_os_arch(owner, repo, os_name, arch):
+    os.environ["GOOS"] = os_name
+    os.environ["GOARCH"] = arch
+    out_file_path = root_path + "/bin/" + os_name + "/" + owner + "_" + repo + "_" + os_name + "_" + arch
+    if os_name == "windows":
+        out_file_path += ".exe"
+    return out_file_path
+
+
+def cross_build(owner, repo, repo_file):
+    out_file_path = set_os_arch(owner, repo, "windows", "amd64")
+    go_build(repo_file, out_file_path)
+    return
 
 
 def start(owner, repo, is_rice):
@@ -108,7 +124,7 @@ def start(owner, repo, is_rice):
         shell_exec(rice_path + " embed-go")
     os.chdir(repo_file)
     set_environ(repo_file)
-    go_build(repo_file)
+    cross_build(owner, repo, repo_file)
     return
 
 
@@ -154,7 +170,7 @@ def get_go():
     return go_path_temp
 
 
-go_path = get_go()
+# go_path = get_go()
 
 print "hello world"
 

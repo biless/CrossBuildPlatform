@@ -86,12 +86,12 @@ def get_file_path(owner, repo):
 
 
 def go_build(out_file_path):
-    shell_info, err_msg = shell_exec(go_path + "-ldflags=\"-s -w\" build -o " + out_file_path + " main.go")
+    shell_info, err_msg = shell_exec(go_path + " build -ldflags=\"-s -w\" -o " + out_file_path + " main.go")
     if err_msg != "":
         packs = re.findall("cannot find package \"(.*)\"", err_msg)
         for pack in packs:
             shell_exec(go_path + " get " + pack)
-        shell_exec(go_path + "-ldflags=\"-s -w\" build -o " + out_file_path + " main.go")
+        shell_exec(go_path + " build -ldflags=\"-s -w\" -o " + out_file_path + " main.go")
     print "build success " + out_file_path
     return
 
@@ -176,6 +176,7 @@ def cross_build(owner, repo, repo_file):
 def start(owner, repo):
     os.chdir(root_path)
     repo_file = get_file_path(owner, repo)
+    # repo_file = "F:\CrossBuildPlatform\jacoblai-Coolpy5Sub-9bc587c/"
     os.chdir(repo_file)
     set_environ(repo_file)
     cross_build(owner, repo, repo_file)

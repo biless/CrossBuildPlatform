@@ -7,14 +7,14 @@ import sys
 import urllib
 import urllib2
 import zipfile
+import shutil
 
 root_path = os.getcwd()
+root_bin_path = root_path + "/bin/"
 system_name = platform.system()
 machine = platform.machine()
-out_file_name = system_name + "_" + machine
 rice_name = "rice"
 if system_name == "Windows":
-    out_file_name += ".exe"
     rice_name += ".exe"
 go_path = "go"
 
@@ -85,43 +85,97 @@ def get_file_path(owner, repo):
     return file_path
 
 
-def go_build(file_path, out_file_path):
-    shell_info, err_msg = shell_exec(go_path + " build -o " + out_file_path + " main.go")
+def go_build(out_file_path):
+    shell_info, err_msg = shell_exec(go_path + "-ldflags=\"-s -w\" build -o " + out_file_path + " main.go")
     if err_msg != "":
         packs = re.findall("cannot find package \"(.*)\"", err_msg)
         for pack in packs:
             shell_exec(go_path + " get " + pack)
-        shell_exec(go_path + " build -o " + out_file_name + " main.go")
-    print "build success " + file_path + out_file_name
-    return file_path
+        shell_exec(go_path + "-ldflags=\"-s -w\" build -o " + out_file_path + " main.go")
+    print "build success " + out_file_path
+    return
 
 
 def set_os_arch(owner, repo, os_name, arch):
     os.environ["GOOS"] = os_name
     os.environ["GOARCH"] = arch
-    out_file_path = root_path + "/bin/" + os_name + "/" + owner + "_" + repo + "_" + os_name + "_" + arch
+    out_file_path = root_path + "/bin/" + os_name + "/" + arch + "/"
+    out_file_name = owner + "_" + repo + "_" + os_name + "_" + arch
     if os_name == "windows":
-        out_file_path += ".exe"
-    return out_file_path
+        out_file_name += ".exe"
+    return out_file_path, out_file_name
 
 
-def cross_build(owner, repo, repo_file):
-    out_file_path = set_os_arch(owner, repo, "windows", "amd64")
-    go_build(repo_file, out_file_path)
+def zip_dir(dirname, zipfilename):
+    filelist = []
+    # Check input ...
+    fulldirname = os.path.abspath(dirname)
+    fullzipfilename = os.path.abspath(zipfilename)
+    print "Start to zip %s to %s ..." % (fulldirname, fullzipfilename)
+    if not os.path.exists(fulldirname):
+        print "Dir/File %s is not exist, Press any key to quit..." % fulldirname
+        inputStr = raw_input()
+        return
+    if os.path.isdir(fullzipfilename):
+        tmpbasename = os.path.basename(dirname)
+        fullzipfilename = os.path.normpath(os.path.join(fullzipfilename, tmpbasename))
+    if os.path.exists(fullzipfilename):
+        print "%s has already exist, are you sure to modify it ? [Y/N]" % fullzipfilename
+        while 1:
+            inputStr = raw_input()
+            if inputStr == "N" or inputStr == "n":
+                return
+            else:
+                if inputStr == "Y" or inputStr == "y":
+                    print "Continue to zip files..."
+                    break
+
+                    # Get file(s) to zip ...
+    if os.path.isfile(dirname):
+        filelist.append(dirname)
+        dirname = os.path.dirname(dirname)
+    else:
+        # get all file in directory
+        for root, dirlist, files in os.walk(dirname):
+            for filename in files:
+                filelist.append(os.path.join(root, filename))
+
+                # Start to zip file ...
+    destZip = zipfile.ZipFile(fullzipfilename, "w")
+    for eachfile in filelist:
+        destfile = eachfile[len(dirname):]
+        # print "Zip file %s..." % destfile
+        destZip.write(eachfile, destfile)
+    destZip.close()
+    print "Zip folder succeed!"
+
+
+def build_zip(out_file_path, out_file_name):
+    if os.path.exists(out_file_path):
+        shutil.rmtree(out_file_path)
+    go_build(out_file_path + out_file_name)
+    shutil.copytree("www", out_file_path + "www")
+    zip_dir(out_file_path, root_bin_path + out_file_name + ".zip")
     return
 
 
-def start(owner, repo, is_rice):
-    rice_path = ""
-    if is_rice:
-        set_environ(root_path)
-        shell_exec(go_path + " get github.com/GeertJohan/go.rice/rice")
-        rice_path = root_path + "/bin/" + rice_name
+def cross_build(owner, repo, repo_file):
+    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "amd64")
+    build_zip(out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "386")
+    build_zip(out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "amd64")
+    build_zip(out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "386")
+    build_zip(out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "darwin", "amd64")
+    build_zip(out_file_path, out_file_name)
+    return
+
+
+def start(owner, repo):
     os.chdir(root_path)
     repo_file = get_file_path(owner, repo)
-    if is_rice:
-        os.chdir(repo_file)
-        shell_exec(rice_path + " embed-go")
     os.chdir(repo_file)
     set_environ(repo_file)
     cross_build(owner, repo, repo_file)
@@ -174,4 +228,4 @@ def get_go():
 
 print "hello world"
 
-start("jacoblai", "Coolpy5Sub", True)
+start("jacoblai", "Coolpy5Sub")

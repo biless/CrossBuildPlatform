@@ -2,12 +2,12 @@ import json
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import urllib
 import urllib2
 import zipfile
-import shutil
 
 root_path = os.getcwd()
 root_bin_path = root_path + "/bin/"
@@ -65,9 +65,8 @@ def shell_exec(cmd):
     child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     info = child.stdout.read().decode("gb2312")
     err = child.stderr.read().decode("gb2312")
-    print "exec ok"
-    # print "info message:\n", info
-    # print "error message:\n", err
+    if err != "":
+        print "exec ok"
     return info, err
 
 
@@ -106,47 +105,33 @@ def set_os_arch(owner, repo, os_name, arch):
     return out_file_path, out_file_name
 
 
-def zip_dir(dirname, zipfilename):
-    filelist = []
+def zip_dir(dir_name, zip_file_name):
+    file_list = []
     # Check input ...
-    fulldirname = os.path.abspath(dirname)
-    fullzipfilename = os.path.abspath(zipfilename)
-    print "Start to zip %s to %s ..." % (fulldirname, fullzipfilename)
-    if not os.path.exists(fulldirname):
-        print "Dir/File %s is not exist, Press any key to quit..." % fulldirname
-        inputStr = raw_input()
+    full_dir_name = os.path.abspath(dir_name)
+    full_zip_file_name = os.path.abspath(zip_file_name)
+    print "Start to zip %s to %s ..." % (full_dir_name, full_zip_file_name)
+    if not os.path.exists(full_dir_name):
+        print "Dir/File %s is not exist, Press any key to quit..." % full_dir_name
+        raw_input()
         return
-    if os.path.isdir(fullzipfilename):
-        tmpbasename = os.path.basename(dirname)
-        fullzipfilename = os.path.normpath(os.path.join(fullzipfilename, tmpbasename))
-    if os.path.exists(fullzipfilename):
-        print "%s has already exist, are you sure to modify it ? [Y/N]" % fullzipfilename
-        while 1:
-            inputStr = raw_input()
-            if inputStr == "N" or inputStr == "n":
-                return
-            else:
-                if inputStr == "Y" or inputStr == "y":
-                    print "Continue to zip files..."
-                    break
-
-                    # Get file(s) to zip ...
-    if os.path.isfile(dirname):
-        filelist.append(dirname)
-        dirname = os.path.dirname(dirname)
+    if os.path.isdir(full_zip_file_name):
+        tmp_base_name = os.path.basename(dir_name)
+        full_zip_file_name = os.path.normpath(os.path.join(full_zip_file_name, tmp_base_name))
+    if os.path.isfile(dir_name):
+        file_list.append(dir_name)
+        dir_name = os.path.dirname(dir_name)
     else:
         # get all file in directory
-        for root, dirlist, files in os.walk(dirname):
+        for root, dir_list, files in os.walk(dir_name):
             for filename in files:
-                filelist.append(os.path.join(root, filename))
-
-                # Start to zip file ...
-    destZip = zipfile.ZipFile(fullzipfilename, "w")
-    for eachfile in filelist:
-        destfile = eachfile[len(dirname):]
+                file_list.append(os.path.join(root, filename))
+    dest_zip = zipfile.ZipFile(full_zip_file_name, "w")
+    for each_file in file_list:
+        dest_file = each_file[len(dir_name):]
         # print "Zip file %s..." % destfile
-        destZip.write(eachfile, destfile)
-    destZip.close()
+        dest_zip.write(each_file, dest_file)
+    dest_zip.close()
     print "Zip folder succeed!"
 
 
@@ -189,9 +174,7 @@ def get_go_compress():
 
 
 def get_go():
-    # file_directory, file_path = get_go_compress()
-    file_directory = "F:\CrossBuildPlatform/"
-    file_path = "F:\CrossBuildPlatform\go1.6.3.windows-amd64.zip"
+    file_directory, file_path = get_go_compress()
     print file_directory, " File Path:", file_path
     ext_path = un_zip(file_path, file_directory)
     print ext_path
@@ -201,7 +184,7 @@ def get_go():
     return go_path_temp
 
 
-def cross_build(owner, repo, repo_file):
+def cross_build(owner, repo):
     out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "amd64")
     build_zip(out_file_path, out_file_name)
     out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "386")
@@ -218,10 +201,9 @@ def cross_build(owner, repo, repo_file):
 def start(owner, repo):
     os.chdir(root_path)
     repo_file = get_file_path(owner, repo)
-    # repo_file = "F:\CrossBuildPlatform\jacoblai-Coolpy5Sub-9bc587c/"
     os.chdir(repo_file)
     set_environ(repo_file)
-    cross_build(owner, repo, repo_file)
+    cross_build(owner, repo)
     return
 
 # go_path = get_go()

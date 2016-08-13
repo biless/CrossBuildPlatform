@@ -82,10 +82,12 @@ def get_file_path(owner, repo):
     ves, zip_url = get_last_release("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest")
     path, zip_path = download_file(zip_url, ves + ".zip")
     file_path = un_zip(zip_path, path + "/")
-    return file_path
+    return file_path, ves
 
 
-def go_build(out_file_path):
+def go_build(os_name, out_file_path):
+    if os_name == "windows":
+        out_file_path += ".exe"
     shell_info, err_msg = shell_exec(go_path + " build -ldflags=\"-s -w\" -o " + out_file_path + " main.go")
     if err_msg != "":
         packs = re.findall("cannot find package \"(.*)\"", err_msg)
@@ -96,13 +98,13 @@ def go_build(out_file_path):
     return
 
 
-def set_os_arch(owner, repo, os_name, arch):
+def set_os_arch(owner, repo, os_name, arch, ves):
     os.environ["GOOS"] = os_name
     os.environ["GOARCH"] = arch
     out_file_path = root_path + "/bin/" + os_name + "/" + arch + "/"
-    out_file_name = owner + "_" + repo + "_" + os_name + "_" + arch
-    if os_name == "windows":
-        out_file_name += ".exe"
+    out_file_name = repo + "_" + os_name + "_" + arch + "_" + ves
+    # if os_name == "windows":
+    #     out_file_name += ".exe"
     return out_file_path, out_file_name
 
 
@@ -136,10 +138,10 @@ def zip_dir(dir_name, zip_file_name):
     print "Zip folder succeed!"
 
 
-def build_zip(out_file_path, out_file_name):
+def build_zip(os_name, out_file_path, out_file_name):
     if os.path.exists(out_file_path):
         shutil.rmtree(out_file_path)
-    go_build(out_file_path + out_file_name)
+    go_build(os_name, out_file_path + out_file_name)
     shutil.copytree("www", out_file_path + "www")
     zip_dir(out_file_path, root_bin_path + out_file_name + ".zip")
     return
@@ -185,26 +187,27 @@ def get_go():
     return go_path_temp
 
 
-def cross_build(owner, repo):
-    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "amd64")
-    build_zip(out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "386")
-    build_zip(out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "amd64")
-    build_zip(out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "386")
-    build_zip(out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "darwin", "amd64")
-    build_zip(out_file_path, out_file_name)
+def cross_build(owner, repo, ves):
+    print ves
+    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "amd64", ves)
+    build_zip("windows", out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "386", ves)
+    build_zip("windows", out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "amd64", ves)
+    build_zip("linux", out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "386", ves)
+    build_zip("linux", out_file_path, out_file_name)
+    out_file_path, out_file_name = set_os_arch(owner, repo, "darwin", "amd64", ves)
+    build_zip("darwin", out_file_path, out_file_name)
     return
 
 
 def start(owner, repo):
     os.chdir(root_path)
-    repo_file = get_file_path(owner, repo)
+    repo_file, ves = get_file_path(owner, repo)
     os.chdir(repo_file)
     set_environ(repo_file)
-    cross_build(owner, repo)
+    cross_build(owner, repo, ves)
     return
 
 # go_path = get_go()

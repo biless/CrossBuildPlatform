@@ -194,7 +194,7 @@ def cross_build(repo, ves, os_list):
 
 # go_path = get_go()
 if __name__ == '__main__':
-    json_temp = json.load(file("config.json"))
+    json_temp = json.load(file(root_path + "/config.json"))
     os.chdir(root_path)
     root_zip_path = root_path + json_temp["zip_path"] + "/"
     repo_file, repo_version = get_file_path(json_temp["owner"], json_temp["repo"])

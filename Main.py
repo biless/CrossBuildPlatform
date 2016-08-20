@@ -98,43 +98,34 @@ def go_build(os_name, out_file_path):
     return
 
 
-def set_os_arch(owner, repo, os_name, arch, ves):
-    os.environ["GOOS"] = os_name
-    os.environ["GOARCH"] = arch
-    out_file_path = root_path + "/bin/" + os_name + "/" + arch + "/"
-    out_file_name = repo + "_" + os_name + "_" + arch + "_" + ves
-    # if os_name == "windows":
-    #     out_file_name += ".exe"
+def set_os_arch(repo, ves, os_system):
+    os.environ["GOOS"] = os_system["os_name"]
+    os.environ["GOARCH"] = os_system["os_arch"]
+    os.environ["GOARM"] = os_system["go_arm"]
+    print "%s/bin/%s/%s/" % (root_path, os_system["os_name"], os_system["os_arch"])
+    out_file_path = "%s/bin/%s/%s/" % (root_path, os_system["os_name"], os_system["os_arch"])
+    out_file_name = "%s_%s_%s_%s" % (repo, os_system["os_real_name"], os_system["os_arch"], ves)
     return out_file_path, out_file_name
 
 
 def zip_dir(dir_name, zip_file_name):
-    file_list = []
-    # Check input ...
     full_dir_name = os.path.abspath(dir_name)
     full_zip_file_name = os.path.abspath(zip_file_name)
     print "Start to zip %s to %s ..." % (full_dir_name, full_zip_file_name)
     if not os.path.exists(full_dir_name):
-        print "Dir/File %s is not exist, Press any key to quit..." % full_dir_name
-        raw_input()
+        print "Dir %s is not exist, check your dir" % full_dir_name
         return
     if os.path.isdir(full_zip_file_name):
         tmp_base_name = os.path.basename(dir_name)
         full_zip_file_name = os.path.normpath(os.path.join(full_zip_file_name, tmp_base_name))
-    if os.path.isfile(dir_name):
-        file_list.append(dir_name)
-        dir_name = os.path.dirname(dir_name)
-    else:
-        # get all file in directory
-        for root, dir_list, files in os.walk(dir_name):
-            for filename in files:
-                file_list.append(os.path.join(root, filename))
-    dest_zip = zipfile.ZipFile(full_zip_file_name, "w")
-    for each_file in file_list:
-        dest_file = each_file[len(dir_name):]
-        # print "Zip file %s..." % destfile
-        dest_zip.write(each_file, dest_file)
-    dest_zip.close()
+    if os.path.isfile(full_dir_name):
+        print "%s is not a dir, check your dir" % full_dir_name
+        return
+    zip_temp = zipfile.ZipFile(full_zip_file_name, "w", zipfile.ZIP_DEFLATED)
+    for root, dir_list, files in os.walk(dir_name):
+        for filename in files:
+            zip_temp.write(os.path.join(root, filename))
+    zip_temp.close()
     print "Zip folder succeed!"
 
 
@@ -150,7 +141,7 @@ def build_zip(os_name, out_file_path, out_file_name):
 def get_go_version():
     html = urllib.urlopen("http://www.golangtc.com/download").read()
     versions = re.findall("<a class=\"accordion-toggle\".*?>[\r\n \t]*([\d.]*?)[\r\n \t]*</a>", html)
-    return versions[0]
+    return versions[0].encode('utf-8')
 
 
 def get_go_compress_name(go_version):
@@ -171,8 +162,8 @@ def get_go_compress():
     print "go version is ", go_version
     go_compress_name = get_go_compress_name(go_version)
     print "go compress name is ", go_compress_name
-    file_directory, file_path = download_file("http://www.golangtc.com/static/go/" + go_version + "/" + go_compress_name
-                                              , go_compress_name)
+    file_directory, file_path = \
+        download_file("http://www.golangtc.com/static/go/%s/%s" % (go_version, go_compress_name), go_compress_name)
     return file_directory, file_path
 
 
@@ -187,29 +178,35 @@ def get_go():
     return go_path_temp
 
 
-def cross_build(owner, repo, ves):
+def build_and_zip(repo, ves, os_system):
+    out_file_path, out_file_name = set_os_arch(repo, ves, os_system)
+    build_zip(os_system["os_name"], out_file_path, out_file_name)
+
+
+def cross_build(repo, ves, os_list):
     print ves
-    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "amd64", ves)
-    build_zip("windows", out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "windows", "386", ves)
-    build_zip("windows", out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "amd64", ves)
-    build_zip("linux", out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "linux", "386", ves)
-    build_zip("linux", out_file_path, out_file_name)
-    out_file_path, out_file_name = set_os_arch(owner, repo, "darwin", "amd64", ves)
-    build_zip("darwin", out_file_path, out_file_name)
+    for os_system in os_list:
+        build_and_zip(repo=repo, ves=ves, os_system=os_system)
     return
 
 
-def start(owner, repo):
+def start(owner, repo, os_list):
     os.chdir(root_path)
     repo_file, ves = get_file_path(owner, repo)
     os.chdir(repo_file)
     set_environ(repo_file)
-    cross_build(owner, repo, ves)
+    cross_build(repo, ves, os_list)
     return
 
-# go_path = get_go()
 
-start("jacoblai", "Coolpy5Sub")
+# go_path = get_go()
+if __name__ == '__main__':
+    os_temp = [{"go_arm": "", "os_name": "windows", "os_real_name": "Windows", "os_arch": "amd64"},
+               {"go_arm": "", "os_name": "windows", "os_real_name": "Windows", "os_arch": "386"},
+               {"go_arm": "", "os_name": "linux", "os_real_name": "Linux", "os_arch": "amd64"},
+               {"go_arm": "", "os_name": "linux", "os_real_name": "Linux", "os_arch": "386"},
+               {"go_arm": "", "os_name": "darwin", "os_real_name": "Mac", "os_arch": "amd64"},
+               {"go_arm": "8", "os_name": "linux", "os_real_name": "Arm8", "os_arch": "arm64"},
+               {"go_arm": "7", "os_name": "linux", "os_real_name": "Arm7", "os_arch": "arm"},
+               {"go_arm": "6", "os_name": "linux", "os_real_name": "Arm6", "os_arch": "arm"}]
+    start("jacoblai", "Coolpy5Sub", os_temp)

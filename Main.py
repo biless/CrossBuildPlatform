@@ -14,10 +14,9 @@ root_path = os.getcwd()
 root_bin_path = root_path + "/bin/"
 system_name = platform.system()
 machine = platform.machine()
-rice_name = "rice"
-if system_name == "Windows":
-    rice_name += ".exe"
 go_path = "go"
+root_zip_path = root_bin_path
+repo_version = "0.0.0.0"
 
 
 def get_last_release(http_address):
@@ -120,6 +119,9 @@ def zip_dir(dir_name, zip_file_name):
     if os.path.isfile(full_dir_name):
         print "%s is not a dir, check your dir" % full_dir_name
         return
+    zip_file_dir = os.path.dirname(full_zip_file_name)
+    if not os.path.exists(zip_file_dir):
+        os.makedirs(os.path.dirname(full_zip_file_name))
     zip_temp = zipfile.ZipFile(full_zip_file_name, "w", zipfile.ZIP_DEFLATED)
     for root, dir_list, files in os.walk(dir_name):
         for filename in files:
@@ -134,7 +136,7 @@ def build_zip(os_system, out_file_path, out_file_name):
     go_build(os_system["os_name"], out_file_path + out_file_name)
     for path in os_system["copy_paths"]:
         shutil.copytree(path, out_file_path + path)
-    zip_dir(out_file_path, root_bin_path + out_file_name + ".zip")
+    zip_dir(out_file_path, "%s%s/%s.zip" % (root_zip_path, repo_version, out_file_name))
     return
 
 
@@ -190,16 +192,12 @@ def cross_build(repo, ves, os_list):
     return
 
 
-def start(owner, repo, os_list):
-    os.chdir(root_path)
-    repo_file, ves = get_file_path(owner, repo)
-    os.chdir(repo_file)
-    set_environ(repo_file)
-    cross_build(repo, ves, os_list)
-    return
-
-
 # go_path = get_go()
 if __name__ == '__main__':
     json_temp = json.load(file("config.json"))
-    start(json_temp["owner"], json_temp["repo"], json_temp["system"])
+    os.chdir(root_path)
+    root_zip_path = root_path + json_temp["zip_path"] + "/"
+    repo_file, repo_version = get_file_path(json_temp["owner"], json_temp["repo"])
+    os.chdir(repo_file)
+    set_environ(repo_file)
+    cross_build(json_temp["repo"], repo_version, json_temp["system"])

@@ -102,7 +102,6 @@ def set_os_arch(repo, ves, os_system):
     os.environ["GOOS"] = os_system["os_name"]
     os.environ["GOARCH"] = os_system["os_arch"]
     os.environ["GOARM"] = os_system["go_arm"]
-    print "%s/bin/%s/%s/" % (root_path, os_system["os_name"], os_system["os_arch"])
     out_file_path = "%s/bin/%s/%s/" % (root_path, os_system["os_name"], os_system["os_arch"])
     out_file_name = "%s_%s_%s_%s" % (repo, os_system["os_real_name"], os_system["os_arch"], ves)
     return out_file_path, out_file_name

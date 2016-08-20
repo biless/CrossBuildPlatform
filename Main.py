@@ -201,14 +201,5 @@ def start(owner, repo, os_list):
 
 # go_path = get_go()
 if __name__ == '__main__':
-    # os_temp = [{"arm": "", "os_name": "windows", "os_real_name": "Windows", "os_arch": "amd64"},
-    #            {"arm": "", "os_name": "windows", "os_real_name": "Windows", "os_arch": "386"},
-    #            {"arm": "", "os_name": "linux", "os_real_name": "Linux", "os_arch": "amd64"},
-    #            {"arm": "", "os_name": "linux", "os_real_name": "Linux", "os_arch": "386"},
-    #            {"arm": "", "os_name": "darwin", "os_real_name": "Mac", "os_arch": "amd64"},
-    #            {"arm": "8", "os_name": "linux", "os_real_name": "Arm8", "os_arch": "arm64"},
-    #            {"arm": "7", "os_name": "linux", "os_real_name": "Arm7", "os_arch": "arm"},
-    #            {"arm": "6", "os_name": "linux", "os_real_name": "Arm6", "os_arch": "arm"}]
-    os_temp = json.load(file("config.json"))
-    print os_temp
-    start("jacoblai", "Coolpy5Sub", os_temp)
+    json_temp = json.load(file("config.json"))
+    start(json_temp["owner"], json_temp["repo"], json_temp["system"])

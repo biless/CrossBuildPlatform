@@ -1,0 +1,50 @@
+[
+  {
+    "go_arm": "",
+    "os_name": "windows",
+    "os_real_name": "Windows",
+    "os_arch": "amd64"
+  },
+  {
+    "go_arm": "",
+    "os_name": "windows",
+    "os_real_name": "Windows",
+    "os_arch": "386"
+  },
+  {
+    "go_arm": "",
+    "os_name": "linux",
+    "os_real_name": "Linux",
+    "os_arch": "amd64"
+  },
+  {
+    "go_arm": "",
+    "os_name": "linux",
+    "os_real_name": "Linux",
+    "os_arch": "386"
+  },
+  {
+    "go_arm": "",
+    "os_name": "darwin",
+    "os_real_name": "Mac",
+    "os_arch": "amd64"
+  },
+  {
+    "go_arm": "8",
+    "os_name": "linux",
+    "os_real_name": "Arm8",
+    "os_arch": "arm64"
+  },
+  {
+    "go_arm": "7",
+    "os_name": "linux",
+    "os_real_name": "Arm7",
+    "os_arch": "arm"
+  },
+  {
+    "go_arm": "6",
+    "os_name": "linux",
+    "os_real_name": "Arm6",
+    "os_arch": "arm"
+  }
+]

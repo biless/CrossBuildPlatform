@@ -10,7 +10,7 @@ import urllib
 import urllib2
 import zipfile
 
-root_path = os.getcwd()
+root_path = sys.path[0]
 root_bin_path = root_path + "/bin/"
 system_name = platform.system()
 machine = platform.machine()
@@ -79,7 +79,7 @@ def set_environ(file_path):
 
 def get_file_path(owner, repo):
     ves, zip_url = get_last_release("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest")
-    path, zip_path = download_file(zip_url, ves + ".zip")
+    path, zip_path = download_file(zip_url, root_path + ves + ".zip")
     file_path = un_zip(zip_path, path + "/")
     return file_path, ves
 
@@ -194,8 +194,9 @@ def cross_build(repo, ves, os_list):
 
 # go_path = get_go()
 if __name__ == '__main__':
-    json_temp = json.load(file(root_path + "/config.json"))
     os.chdir(root_path)
+    print root_path
+    json_temp = json.load(file(root_path + "/config.json"))
     root_zip_path = root_path + json_temp["zip_path"] + "/"
     repo_file, repo_version = get_file_path(json_temp["owner"], json_temp["repo"])
     os.chdir(repo_file)

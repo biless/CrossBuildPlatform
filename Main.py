@@ -101,7 +101,7 @@ def go_build(os_name, out_file_path):
 def set_os_arch(repo, ves, os_system):
     os.environ["GOOS"] = os_system["os_name"]
     os.environ["GOARCH"] = os_system["os_arch"]
-    os.environ["GOARM"] = os_system["go_arm"]
+    os.environ["GOARM"] = os_system["arm"]
     out_file_path = "%s/bin/%s/%s/" % (root_path, os_system["os_name"], os_system["os_arch"])
     out_file_name = "%s_%s_%s_%s" % (repo, os_system["os_real_name"], os_system["os_arch"], ves)
     return out_file_path, out_file_name
@@ -128,11 +128,12 @@ def zip_dir(dir_name, zip_file_name):
     print "Zip folder succeed!"
 
 
-def build_zip(os_name, out_file_path, out_file_name):
+def build_zip(os_system, out_file_path, out_file_name):
     if os.path.exists(out_file_path):
         shutil.rmtree(out_file_path)
-    go_build(os_name, out_file_path + out_file_name)
-    shutil.copytree("www", out_file_path + "www")
+    go_build(os_system["os_name"], out_file_path + out_file_name)
+    for path in os_system["copy_paths"]:
+        shutil.copytree(path, out_file_path + path)
     zip_dir(out_file_path, root_bin_path + out_file_name + ".zip")
     return
 
@@ -179,7 +180,7 @@ def get_go():
 
 def build_and_zip(repo, ves, os_system):
     out_file_path, out_file_name = set_os_arch(repo, ves, os_system)
-    build_zip(os_system["os_name"], out_file_path, out_file_name)
+    build_zip(os_system, out_file_path, out_file_name)
 
 
 def cross_build(repo, ves, os_list):
@@ -200,12 +201,14 @@ def start(owner, repo, os_list):
 
 # go_path = get_go()
 if __name__ == '__main__':
-    os_temp = [{"go_arm": "", "os_name": "windows", "os_real_name": "Windows", "os_arch": "amd64"},
-               {"go_arm": "", "os_name": "windows", "os_real_name": "Windows", "os_arch": "386"},
-               {"go_arm": "", "os_name": "linux", "os_real_name": "Linux", "os_arch": "amd64"},
-               {"go_arm": "", "os_name": "linux", "os_real_name": "Linux", "os_arch": "386"},
-               {"go_arm": "", "os_name": "darwin", "os_real_name": "Mac", "os_arch": "amd64"},
-               {"go_arm": "8", "os_name": "linux", "os_real_name": "Arm8", "os_arch": "arm64"},
-               {"go_arm": "7", "os_name": "linux", "os_real_name": "Arm7", "os_arch": "arm"},
-               {"go_arm": "6", "os_name": "linux", "os_real_name": "Arm6", "os_arch": "arm"}]
+    # os_temp = [{"arm": "", "os_name": "windows", "os_real_name": "Windows", "os_arch": "amd64"},
+    #            {"arm": "", "os_name": "windows", "os_real_name": "Windows", "os_arch": "386"},
+    #            {"arm": "", "os_name": "linux", "os_real_name": "Linux", "os_arch": "amd64"},
+    #            {"arm": "", "os_name": "linux", "os_real_name": "Linux", "os_arch": "386"},
+    #            {"arm": "", "os_name": "darwin", "os_real_name": "Mac", "os_arch": "amd64"},
+    #            {"arm": "8", "os_name": "linux", "os_real_name": "Arm8", "os_arch": "arm64"},
+    #            {"arm": "7", "os_name": "linux", "os_real_name": "Arm7", "os_arch": "arm"},
+    #            {"arm": "6", "os_name": "linux", "os_real_name": "Arm6", "os_arch": "arm"}]
+    os_temp = json.load(file("config.json"))
+    print os_temp
     start("jacoblai", "Coolpy5Sub", os_temp)

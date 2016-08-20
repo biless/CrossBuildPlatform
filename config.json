@@ -1,50 +1,58 @@
 [
   {
-    "go_arm": "",
+    "arm": "",
     "os_name": "windows",
     "os_real_name": "Windows",
-    "os_arch": "amd64"
+    "os_arch": "amd64",
+    "copy_paths": ["www"]
   },
   {
-    "go_arm": "",
+    "arm": "",
     "os_name": "windows",
     "os_real_name": "Windows",
-    "os_arch": "386"
+    "os_arch": "386",
+    "copy_paths": ["www"]
   },
   {
-    "go_arm": "",
+    "arm": "",
     "os_name": "linux",
     "os_real_name": "Linux",
-    "os_arch": "amd64"
+    "os_arch": "amd64",
+    "copy_paths": ["www"]
   },
   {
-    "go_arm": "",
+    "arm": "",
     "os_name": "linux",
     "os_real_name": "Linux",
-    "os_arch": "386"
+    "os_arch": "386",
+    "copy_paths": ["www"]
   },
   {
-    "go_arm": "",
+    "arm": "",
     "os_name": "darwin",
     "os_real_name": "Mac",
-    "os_arch": "amd64"
+    "os_arch": "amd64",
+    "copy_paths": ["www"]
   },
   {
-    "go_arm": "8",
+    "arm": "8",
     "os_name": "linux",
     "os_real_name": "Arm8",
-    "os_arch": "arm64"
+    "os_arch": "arm64",
+    "copy_paths": ["www"]
   },
   {
-    "go_arm": "7",
+    "arm": "7",
     "os_name": "linux",
     "os_real_name": "Arm7",
-    "os_arch": "arm"
+    "os_arch": "arm",
+    "copy_paths": ["www"]
   },
   {
-    "go_arm": "6",
+    "arm": "6",
     "os_name": "linux",
     "os_real_name": "Arm6",
-    "os_arch": "arm"
+    "os_arch": "arm",
+    "copy_paths": ["www"]
   }
 ]

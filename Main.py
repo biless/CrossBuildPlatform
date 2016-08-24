@@ -129,7 +129,8 @@ def zip_dir(dir_name, zip_file_name):
     zip_temp = zipfile.ZipFile(full_zip_file_name, "w", zipfile.ZIP_DEFLATED)
     for root, dir_list, files in os.walk(dir_name):
         for filename in files:
-            zip_temp.write(os.path.join(root, filename))
+            file_path_temp = os.path.join(root, filename)
+            zip_temp.write(file_path_temp, file_path_temp[len(dir_name):])
     zip_temp.close()
     print "Zip folder succeed!"
 

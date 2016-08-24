@@ -17,6 +17,7 @@ machine = platform.machine()
 go_path = "go"
 root_zip_path = root_bin_path
 repo_version = "0.0.0.0"
+go_root = ""
 
 
 def get_last_release(http_address):
@@ -101,6 +102,10 @@ def set_os_arch(repo, ves, os_system):
     os.environ["GOOS"] = os_system["os_name"]
     os.environ["GOARCH"] = os_system["os_arch"]
     os.environ["GOARM"] = os_system["arm"]
+    os.environ["GOROOT"] = go_root
+    if "go_root" in os_system:
+        os.environ["GOROOT"] = root_path + os_system["go_root"] + "/"
+    os.environ["PATH"] = os.environ["GOROOT"] + "bin/"
     out_file_path = "%s/bin/%s/%s/" % (root_path, os_system["os_name"], os_system["os_arch"])
     out_file_name = "%s_%s_%s_%s" % (repo, os_system["os_real_name"], os_system["os_arch"], ves)
     return out_file_path, out_file_name
@@ -197,6 +202,7 @@ if __name__ == '__main__':
     os.chdir(root_path)
     print root_path
     json_temp = json.load(file(root_path + "/config.json"))
+    go_root = root_path + json_temp["default_GOROOT"] + "/"
     root_zip_path = root_path + json_temp["zip_path"] + "/"
     repo_file, repo_version = get_file_path(json_temp["owner"], json_temp["repo"])
     os.chdir(repo_file)

@@ -14,7 +14,6 @@ root_path = sys.path[0]
 root_bin_path = root_path + "/bin/"
 system_name = platform.system()
 machine = platform.machine()
-go_path = "go"
 root_zip_path = root_bin_path
 repo_version = "0.0.0.0"
 go_root = ""
@@ -85,7 +84,7 @@ def get_file_path(owner, repo):
     return file_path, ves
 
 
-def go_build(os_name, out_file_path):
+def go_build(go_path, os_name, out_file_path):
     if os_name == "windows":
         out_file_path += ".exe"
     shell_info, err_msg = shell_exec(go_path + " build -ldflags=\"-s -w\" -o " + out_file_path + " main.go")
@@ -105,10 +104,10 @@ def set_os_arch(repo, ves, os_system):
     os.environ["GOROOT"] = go_root
     if "go_root" in os_system:
         os.environ["GOROOT"] = root_path + os_system["go_root"] + "/"
-    os.environ["PATH"] = os.environ["GOROOT"] + "bin/"
+    go_path = os.environ["GOROOT"] + "bin/go"
     out_file_path = "%s/bin/%s/%s/" % (root_path, os_system["os_name"], os_system["os_arch"])
     out_file_name = "%s_%s_%s_%s" % (repo, os_system["os_real_name"], os_system["os_arch"], ves)
-    return out_file_path, out_file_name
+    return out_file_path, out_file_name, go_path
 
 
 def zip_dir(dir_name, zip_file_name):
@@ -135,10 +134,10 @@ def zip_dir(dir_name, zip_file_name):
     print "Zip folder succeed!"
 
 
-def build_zip(os_system, out_file_path, out_file_name):
+def build_zip(os_system, out_file_path, out_file_name, go_path):
     if os.path.exists(out_file_path):
         shutil.rmtree(out_file_path)
-    go_build(os_system["os_name"], out_file_path + out_file_name)
+    go_build(go_path, os_system["os_name"], out_file_path + out_file_name)
     for path in os_system["copy_paths"]:
         shutil.copytree(path, out_file_path + path)
     zip_dir(out_file_path, "%s%s/%s.zip" % (root_zip_path, repo_version, out_file_name))
@@ -186,8 +185,8 @@ def get_go():
 
 
 def build_and_zip(repo, ves, os_system):
-    out_file_path, out_file_name = set_os_arch(repo, ves, os_system)
-    build_zip(os_system, out_file_path, out_file_name)
+    out_file_path, out_file_name, go_path = set_os_arch(repo, ves, os_system)
+    build_zip(os_system, out_file_path, out_file_name, go_path)
 
 
 def cross_build(repo, ves, os_list):

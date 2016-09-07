@@ -2,7 +2,7 @@
   "owner": "jacoblai",
   "repo": "Coolpy5Sub",
   "zip_path":"/version",
-  "default_GOROOT":"/Go",
+  "default_GOROOT":"/go",
   "system": [
     {
       "arm": "",
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "go_root":"/Go",
+      "go_root":"/go",
       "arm": "6",
       "os_name": "linux",
       "os_real_name": "Arm6",
